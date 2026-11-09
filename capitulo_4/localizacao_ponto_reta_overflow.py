@@ -7,7 +7,6 @@ if str(PASTA_RAIZ) not in sys.path:
 
 
 import numpy as np
-import random as rnd
 import src.classes_numpy as cl
 
 
