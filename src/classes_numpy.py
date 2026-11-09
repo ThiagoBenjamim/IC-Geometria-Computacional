@@ -93,6 +93,12 @@ class Plano:
         self.fig, self.ax = plt.subplots()
         self.ax.set(xlim=(min_val, max_val), xticks=np.linspace(min_val, max_val, 11),
             ylim=(min_val, max_val), yticks=np.linspace(min_val, max_val, 11))
+        self.fig.subplots_adjust(
+            left=0.04,
+            right=0.96,
+            top=0.96,
+            bottom=0.04
+        )
 
     def apresentar(self):
         plt.show()
