@@ -4,6 +4,15 @@ Códigos Implementados:✅​
 /Ainda não implementados:❌​
 
 Códigos do Capítulo 4:
-Localização ponto e reta✅​
+
+Localização entre ponto e reta✅
+
+​
+Localização entre ponto e reta com overflow✅
+
+Localização entre ponto e triângulo❌
+
+​
+Localização entre ponto e polígono❌
 
 Códigos do Capítulo 9:
