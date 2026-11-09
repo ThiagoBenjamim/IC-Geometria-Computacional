@@ -85,9 +85,33 @@ class Reta:
             self.plot_reta_finita()
     
 
+class PoligonoPositivo:
+    def __init__(self, pontos):
+
+        n = len(pontos)
+        if n < 3:
+            raise ValueError("Quantidade de pontos insuficiente para formar um poligono")
+
+        for ponto in pontos:
+            if ponto.ax != pontos[0].ax:
+                raise AttributeError("Os pontos pertencem a graficos diferentes")
+
+        x_cent = sum(i.x for i in pontos)/n
+        y_cent = sum(i.y for i in pontos)/n
+
+        self.pontos_ordenados = sorted(pontos, key=lambda p: np.arctan2(p.y - y_cent, p.x - x_cent))
+
+        retas_ordenadas = []
+        for i in range(n):
+            ponto1 = self.pontos_ordenados[i-1]
+            ponto2 = self.pontos_ordenados[i]
+
+            retas_ordenadas.append(Reta(ponto1, ponto2))
+        self.retas_ordenadas = np.array(retas_ordenadas)
+
+
 class Plano:
     def __init__(self, min_val, max_val):
-
         plt.style.use('_mpl-gallery')
 
         self.fig, self.ax = plt.subplots()
