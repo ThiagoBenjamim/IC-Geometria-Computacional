@@ -5,8 +5,7 @@ PASTA_RAIZ = Path(__file__).resolve().parent.parent
 if str(PASTA_RAIZ) not in sys.path:
     sys.path.append(str(PASTA_RAIZ))
 
-import matplotlib.pyplot as plt
-import numpy as np
+
 import random as rnd
 import src.classes_numpy as cl
 
