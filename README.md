@@ -13,6 +13,8 @@ Localização entre ponto e reta com overflow✅
 Localização entre ponto e triângulo❌
 
 ​
-Localização entre ponto e polígono❌
+Localização entre ponto e polígono convexo❌
+
+Localização entre ponto e polígono geral❌
 
 Códigos do Capítulo 9:
