@@ -95,23 +95,50 @@ class PoligonoConvexo:
         self.ax = ax
 
         #Algoritmo de Valtr
-        pontos_x = np.sort(np.array(rnd.sample(range(ax.min_max_val), n)))
-        pontos_y = np.sort(np.array(rnd.sample(range(ax.min_max_val), n)))
+        pontos_x = rnd.sample(range(ax.min_max_val), n)
+        pontos_y = rnd.sample(range(ax.min_max_val), n)
 
         extremos = [pontos_x[0], pontos_x[-1], pontos_y[0], pontos_y[-1]]
 
-        ran_dis = [rnd.randint(1, n-1)]
-        ran_dis.append((n-2) - ran_dis[0])
+        ran_dis = rnd.randint(1, n-1)
         shuffled = pontos_x[1:-1]
-        np.random.shuffle(shuffled)
-        x_inter = np.sort(np.split(shuffled, ran_dis))
+        rnd.shuffle(shuffled)
+        x_inter = [shuffled[:ran_dis], shuffled[ran_dis:]]
+        x_inter[0].sort(reverse=True)
+        x_inter[1].sort()
+        x_inter[0].insert(extremos[1], 0)
+        x_inter[0].append(extremos[0])
+        x_inter[1].insert(extremos[0], 0)
+        x_inter[1].append(extremos[1])
 
-        ran_dis = [rnd.randint(1, n-1)]
-        ran_dis.append((n-2) - ran_dis[0])
+
+        ran_dis = rnd.randint(1, n-1)
         shuffled = pontos_y[1:-1]
-        np.random.shuffle(shuffled)
-        y_inter = np.sort(np.split(shuffled, ran_dis))        
+        rnd.shuffle(shuffled)
+        y_inter = [shuffled[:ran_dis], shuffled[ran_dis:]]
+        y_inter[0].sort(reverse=True)
+        y_inter[1].sort()
+        y_inter[0].insert(extremos[3], 0)
+        y_inter[0].append(extremos[2])
+        y_inter[1].insert(extremos[2], 0)
+        y_inter[1].append(extremos[3])
+         
+        difs_x = ([(x_inter[0][i+1] - x_inter[0][i]) for i in range(len(x_inter[0]))] +
+                [(x_inter[1][i+1] - x_inter[1][i]) for i in range(len(x_inter[1]))])
+        difs_y = ([(y_inter[0][i+1] - y_inter[0][i]) for i in range(len(y_inter[0]))] +
+                [(y_inter[1][i+1] - y_inter[1][i]) for i in range(len(y_inter[1]))])
+
+        rnd.shuffle(difs_x)
+        rnd.shuffle(difs_y)
+
+        vetores = [[difs_x[i], difs_y[i]] for i in range(n)]
+
+        vetores = sorted(vetores, key=lambda x: np.arctan(x[1]/x[0]))
         
+        ponto_0 = Ponto(ax, 0, ax.max_value//2)
+        self.pontos = np.array(
+            []
+        )
 
 
 class Plano:
