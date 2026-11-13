@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import random as rnd
 
 
 class Ponto:
@@ -85,35 +86,40 @@ class Reta:
             self.plot_reta_finita()
     
 
-class PoligonoPositivo:
-    def __init__(self, pontos):
+class PoligonoConvexo:
+    def __init__(self, ax, n):
 
-        n = len(pontos)
         if n < 3:
             raise ValueError("Quantidade de pontos insuficiente para formar um poligono")
 
-        for ponto in pontos:
-            if ponto.ax != pontos[0].ax:
-                raise AttributeError("Os pontos pertencem a graficos diferentes")
+        self.ax = ax
 
-        x_cent = sum(i.x for i in pontos)/n
-        y_cent = sum(i.y for i in pontos)/n
+        #Algoritmo de Valtr
+        pontos_x = np.sort(np.array(rnd.sample(range(ax.min_max_val), n)))
+        pontos_y = np.sort(np.array(rnd.sample(range(ax.min_max_val), n)))
 
-        self.pontos_ordenados = sorted(pontos, key=lambda p: np.arctan2(p.y - y_cent, p.x - x_cent))
+        extremos = [pontos_x[0], pontos_x[-1], pontos_y[0], pontos_y[-1]]
 
-        retas_ordenadas = []
-        for i in range(n):
-            ponto1 = self.pontos_ordenados[i-1]
-            ponto2 = self.pontos_ordenados[i]
+        ran_dis = [rnd.randint(1, n-1)]
+        ran_dis.append((n-2) - ran_dis[0])
+        shuffled = pontos_x[1:-1]
+        np.random.shuffle(shuffled)
+        x_inter = np.sort(np.split(shuffled, ran_dis))
 
-            retas_ordenadas.append(Reta(ponto1, ponto2))
-        self.retas_ordenadas = np.array(retas_ordenadas)
+        ran_dis = [rnd.randint(1, n-1)]
+        ran_dis.append((n-2) - ran_dis[0])
+        shuffled = pontos_y[1:-1]
+        np.random.shuffle(shuffled)
+        y_inter = np.sort(np.split(shuffled, ran_dis))        
+        
 
 
 class Plano:
     def __init__(self, min_val, max_val):
         plt.style.use('_mpl-gallery')
 
+        self.min_val = min_val
+        self.max_val = max_val
         self.fig, self.ax = plt.subplots()
         self.ax.set(xlim=(min_val, max_val), xticks=np.linspace(min_val, max_val, 11),
             ylim=(min_val, max_val), yticks=np.linspace(min_val, max_val, 11))
@@ -123,6 +129,10 @@ class Plano:
             top=0.96,
             bottom=0.04
         )
+
+    @property
+    def min_max_val(self):
+        return np.array([self.min_val, self.max_val])
 
     def apresentar(self):
         plt.show()
