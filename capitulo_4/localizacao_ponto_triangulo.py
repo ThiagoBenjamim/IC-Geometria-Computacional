@@ -8,18 +8,18 @@ if str(PASTA_RAIZ) not in sys.path:
 
 import random as rnd
 import src.classes_numpy as cl
-from localizacao_ponto_reta import localizacao_ponto_reta
 
 
 #Cria o plano no qual estarão a reta e o plano
 graf_min = 0
-graf_max = 30
+graf_max = 9
 plano = cl.Plano(graf_min, graf_max)
 
-triangulo_A = cl.Ponto(plano.ax, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))
-triangulo_A.adic_tit("A")
-triangulo_B = cl.Ponto(plano.ax, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))
-triangulo_B.adic_tit("B")
-triangulo_C = cl.Ponto(plano.ax, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))
-triangulo_C.adic_tit("C")
+ponto = cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))
 
+triangulo = cl.PoligonoConvexo(plano, 3)
+
+triangulo.plot_poligono()
+ponto.plot_point()
+print(triangulo.localizacao_ponto_poligono(ponto))
+plano.apresentar()
