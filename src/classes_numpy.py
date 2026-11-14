@@ -4,8 +4,9 @@ import random as rnd
 
 
 class Ponto:
-    def __init__(self, ax, x, y, cor="red"):
-        self.ax = ax
+    def __init__(self, plano, x, y, cor="red"):
+        self.ax = plano.ax
+        self.plano = plano
         self.vec = np.array([x, y])
         self.cor = cor
 
@@ -23,6 +24,11 @@ class Ponto:
     def __repr__(self):
         return f"Ponto({self.x}, {self.y})"
 
+    def __add__(self, outro):
+        if isinstance(outro, list) or isinstance(outro, tuple) or isinstance(outro, np.ndarray):
+            return Ponto(self.plano, self.x + outro[0], self.y + outro[1])
+        raise TypeError("Variavel nao compativel com soma com ponto")
+
     def adic_tit(self, tit):
         self.ax.text(self.x + 0.05, self.y + 0.05, tit, fontsize=10, fontweight='bold')
 
@@ -39,6 +45,7 @@ class Reta:
             raise AttributeError("Os pontos pertencem a graficos diferentes")
 
         self.ax = ponto1.ax
+        self.plano = ponto1.plano
         self.p1 = ponto1
         self.p2 = ponto2
         self.cor = cor
@@ -58,8 +65,8 @@ class Reta:
     def perpendicular(self):
         dx, dy = self.vec
 
-        p1_novo = Ponto(self.ax, self.p1.x, self.p1.y, self.p1.cor)
-        p2_novo = Ponto(self.ax, self.p1.x - dy, self.p1.y + dx, self.p2.cor)
+        p1_novo = Ponto(self.plano, self.p1.x, self.p1.y, self.p1.cor)
+        p2_novo = Ponto(self.plano, self.p1.x - dy, self.p1.y + dx, self.p2.cor)
 
         return Reta(p1_novo, p2_novo, self.cor)
 
@@ -82,21 +89,63 @@ class Reta:
         self.ax.plot(self.x_coords, self.y_coords, color=self.cor, marker="o")
 
     def plot_reta_infinita(self):
-            self.ax.axline(self.p1.vec, self.p2.vec, color=self.cor, linestyle="-")
-            self.plot_reta_finita()
+        self.ax.axline(self.p1.vec, self.p2.vec, color=self.cor, linestyle="-")
+        self.plot_reta_finita()
+
+    def localizacao_ponto_reta(self, ponto):
+
+        reta_ponto = Reta(self.p1, ponto)
+            
+        produto_interno = reta_ponto.produto_interno(self.perpendicular())
+
+        if produto_interno > 0:
+            return ["Ponto esta a esquerda de AB"]
+        elif produto_interno < 0:
+            return ["Ponto esta a direita de AB"]
+        elif produto_interno == 0:
+            resposta = ["Ponto esta em AB"]
+            if not self.ver_vertical():
+                x_a, x_b, x_c = self.p1.x, self.p2.x, ponto.x
+                men, mai = min(x_a, x_b), max(x_a, x_b)
+                if men < x_c < mai: resposta.append("Ponto esta entre A e B")
+                elif x_c < men:
+                    if men == x_a: resposta.append("Ponto esta antes de A")
+                    elif men == x_b: resposta.append("Ponto esta depois de B")
+                elif x_c > mai:
+                    if mai == x_a: resposta.append("Ponto esta antes de A")
+                    elif mai == x_b: resposta.append("Ponto esta depois de B")
+                elif x_c == x_a: resposta.append("Ponto esta em A")
+                elif x_c == x_b: resposta.append("Ponto esta em B")
+                
+                return resposta
+            else:
+                y_a, y_b, y_c = self.p1.y, self.p2.y, ponto.y
+                men, mai = min(y_a, y_b), max(y_a, y_b)
+                if men < y_c < mai: resposta.append("C esta entre A e B")
+                elif y_c < men:
+                    if men == y_a: resposta.append("C esta antes de A")
+                    elif men == y_b: resposta.append("C esta depois de B")
+                elif y_c > mai:
+                    if mai == y_a: resposta.append("C esta antes de A")
+                    elif mai == y_b: resposta.append("C esta depois de B")
+                elif y_c == y_a: resposta.append("C esta em A")
+                elif y_c == y_b: resposta.append("C esta em B")
+
+                return resposta
     
 
 class PoligonoConvexo:
-    def __init__(self, ax, n):
+    def __init__(self, plano, n):
 
         if n < 3:
             raise ValueError("Quantidade de pontos insuficiente para formar um poligono")
 
-        self.ax = ax
+        self.ax = plano.ax
+        self.plano = plano
 
         #Algoritmo de Valtr
-        pontos_x = rnd.sample(range(ax.min_max_val), n)
-        pontos_y = rnd.sample(range(ax.min_max_val), n)
+        pontos_x = sorted(rnd.sample(range(*map(int, plano.min_max_val)), n))
+        pontos_y = sorted(rnd.sample(range(*map(int, plano.min_max_val)), n))
 
         extremos = [pontos_x[0], pontos_x[-1], pontos_y[0], pontos_y[-1]]
 
@@ -106,11 +155,10 @@ class PoligonoConvexo:
         x_inter = [shuffled[:ran_dis], shuffled[ran_dis:]]
         x_inter[0].sort(reverse=True)
         x_inter[1].sort()
-        x_inter[0].insert(extremos[1], 0)
+        x_inter[0].insert(0, extremos[1])
         x_inter[0].append(extremos[0])
-        x_inter[1].insert(extremos[0], 0)
+        x_inter[1].insert(0, extremos[0])
         x_inter[1].append(extremos[1])
-
 
         ran_dis = rnd.randint(1, n-1)
         shuffled = pontos_y[1:-1]
@@ -118,33 +166,58 @@ class PoligonoConvexo:
         y_inter = [shuffled[:ran_dis], shuffled[ran_dis:]]
         y_inter[0].sort(reverse=True)
         y_inter[1].sort()
-        y_inter[0].insert(extremos[3], 0)
+        y_inter[0].insert(0, extremos[3])
         y_inter[0].append(extremos[2])
-        y_inter[1].insert(extremos[2], 0)
+        y_inter[1].insert(0, extremos[2])
         y_inter[1].append(extremos[3])
-         
-        difs_x = ([(x_inter[0][i+1] - x_inter[0][i]) for i in range(len(x_inter[0]))] +
-                [(x_inter[1][i+1] - x_inter[1][i]) for i in range(len(x_inter[1]))])
-        difs_y = ([(y_inter[0][i+1] - y_inter[0][i]) for i in range(len(y_inter[0]))] +
-                [(y_inter[1][i+1] - y_inter[1][i]) for i in range(len(y_inter[1]))])
+
+        val_len = [len(x_inter[0]), len(x_inter[1])]
+        difs_x = ([(x_inter[0][i+1] - x_inter[0][i]) for i in range(val_len[0]-1)] +
+                [(x_inter[1][i+1] - x_inter[1][i]) for i in range(val_len[1]-1)])
+        val_len = [len(y_inter[0]), len(y_inter[1])]
+        difs_y = ([(y_inter[0][i+1] - y_inter[0][i]) for i in range(val_len[0]-1)] +
+                [(y_inter[1][i+1] - y_inter[1][i]) for i in range(val_len[1]-1)])
 
         rnd.shuffle(difs_x)
         rnd.shuffle(difs_y)
 
         vetores = [[difs_x[i], difs_y[i]] for i in range(n)]
 
-        vetores = sorted(vetores, key=lambda x: np.arctan(x[1]/x[0]))
+        vetores = sorted(vetores, key=lambda x: np.arctan2(x[1], x[0]))
         
-        ponto_0 = Ponto(ax, 0, ax.max_value//2)
-        self.pontos = np.array(
-            []
-        )
+        coords = np.vstack(([0, 0], np.cumsum(vetores[:-1], axis=0)))
+        desloc_x = extremos[0] - coords[:, 0].min()
+        desloc_y = extremos[2] - coords[:, 1].min()
+        coords[:, 0] += desloc_x
+        coords[:, 1] += desloc_y
 
+        self.pontos = np.array([Ponto(plano, x, y) for x, y in coords])
+
+        self.retas = np.array([Reta(self.pontos[i], self.pontos[(i+1)%len(self.pontos)], "blue") for i in range(len(self.pontos))])
+
+    def __len__(self):
+        return len(self.retas)
+
+    def __iter__(self):
+        return iter(self.retas)
+
+    def localizacao_ponto_poligono(self, ponto):
+        for reta in self:
+            if reta.localizacao_ponto_reta(ponto)[0] == "Ponto esta a direita de AB":
+                return "Ponto esta fora do Poligono"
+        return "Ponto esta dentro do Poligono"
+
+    def plot_poligono(self):
+        for reta in self:
+            reta.plot_reta_finita()
+    
 
 class Plano:
     def __init__(self, min_val, max_val):
         plt.style.use('_mpl-gallery')
 
+        if min_val >= max_val:
+            raise ValueError("Valor mínimo para o gráfico não pode ser maior ou igual do que o valor máximo")
         self.min_val = min_val
         self.max_val = max_val
         self.fig, self.ax = plt.subplots()
@@ -159,7 +232,7 @@ class Plano:
 
     @property
     def min_max_val(self):
-        return np.array([self.min_val, self.max_val])
+        return [self.min_val, self.max_val]
 
     def apresentar(self):
         plt.show()
