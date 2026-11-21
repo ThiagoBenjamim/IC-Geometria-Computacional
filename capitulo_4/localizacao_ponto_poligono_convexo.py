@@ -21,7 +21,7 @@ poligono = cl.PoligonoConvexo(plano, rnd.randint(3, 20))
 
 poligono.plot_poligono()
 ponto.plot_point()
-if poligono.localizacao_ponto_poligono(ponto):
+if poligono.localizacao_ponto_poligono_generalizacao(ponto):
     print("Ponto dentro do Polígono")
 else:
     print("Ponto fora do polígono")
