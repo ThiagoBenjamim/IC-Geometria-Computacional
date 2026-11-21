@@ -21,5 +21,8 @@ triangulo = cl.PoligonoConvexo(plano, 3)
 
 triangulo.plot_poligono()
 ponto.plot_point()
-print(triangulo.localizacao_ponto_poligono(ponto))
+if triangulo.localizacao_ponto_poligono(ponto):
+    print("Ponto esta dentro do Triangulo")
+else:
+    print("Ponto esta fora do Triangulo")
 plano.apresentar()

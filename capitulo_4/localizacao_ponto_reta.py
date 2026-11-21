@@ -32,5 +32,9 @@ pontos["B"].adic_tit("B")
 pontos["C"].adic_tit("C")
 pontos["C"].plot_point()
 reta.plot_reta_infinita()
-print(reta.localizacao_ponto_reta(pontos["C"]))
+if reta.localizacao_ponto_reta(pontos["C"])[0]:
+    print("Ponto esta a esquerda da Reta")
+else:
+    print("Ponto esta a direita da Reta")
+print(reta.localizacao_ponto_reta(pontos["C"])[1])
 plano.apresentar()
