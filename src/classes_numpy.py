@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import random as rnd
+import math
 
 
 class Ponto:
@@ -25,9 +26,16 @@ class Ponto:
         return f"Ponto({self.x}, {self.y})"
 
     def __add__(self, outro):
-        if isinstance(outro, list) or isinstance(outro, tuple) or isinstance(outro, np.ndarray):
+        if (isinstance(outro, list) or isinstance(outro, tuple) or isinstance(outro, np.ndarray)) and len(outro) == 2:
             return Ponto(self.plano, self.x + outro[0], self.y + outro[1])
         raise TypeError("Variavel nao compativel com soma com ponto")
+
+    def __eq__(self, outro):
+        if isinstance(outro, Ponto):
+            if self.plano.ax == outro.plano.ax:
+                if self.vec == outro.vec:
+                    return True
+        return False
 
     def adic_tit(self, tit):
         self.ax.text(self.x + 0.05, self.y + 0.05, tit, fontsize=10, fontweight='bold')
@@ -92,18 +100,25 @@ class Reta:
         self.ax.axline(self.p1.vec, self.p2.vec, color=self.cor, linestyle="-")
         self.plot_reta_finita()
 
-    def localizacao_ponto_reta(self, ponto):
+    def localizacao_ponto_reta(self, ponto) -> list:
+
+        if not isinstance(ponto, Ponto):
+            raise ValueError("Parametro inserido nao e um Ponto")
 
         reta_ponto = Reta(self.p1, ponto)
             
         produto_interno = reta_ponto.produto_interno(self.perpendicular())
 
+        if self.ver_degenerado():
+            return ["Reta degenerada"]
+
         if produto_interno > 0:
-            return ["Ponto esta a esquerda de AB"]
+            return [True, "Ponto nao esta na Reta"]
         elif produto_interno < 0:
-            return ["Ponto esta a direita de AB"]
+            return [False, "Ponto nao esta na Reta"]
         elif produto_interno == 0:
-            resposta = ["Ponto esta em AB"]
+            resposta = []
+            resposta.append(False)
             if not self.ver_vertical():
                 x_a, x_b, x_c = self.p1.x, self.p2.x, ponto.x
                 men, mai = min(x_a, x_b), max(x_a, x_b)
@@ -116,22 +131,43 @@ class Reta:
                     elif mai == x_b: resposta.append("Ponto esta depois de B")
                 elif x_c == x_a: resposta.append("Ponto esta em A")
                 elif x_c == x_b: resposta.append("Ponto esta em B")
-                
+
                 return resposta
             else:
                 y_a, y_b, y_c = self.p1.y, self.p2.y, ponto.y
                 men, mai = min(y_a, y_b), max(y_a, y_b)
-                if men < y_c < mai: resposta.append("C esta entre A e B")
+                if men < y_c < mai: resposta.append("Ponto esta entre A e B")
                 elif y_c < men:
-                    if men == y_a: resposta.append("C esta antes de A")
-                    elif men == y_b: resposta.append("C esta depois de B")
+                    if men == y_a: resposta.append("Ponto esta antes de A")
+                    elif men == y_b: resposta.append("Ponto esta depois de B")
                 elif y_c > mai:
-                    if mai == y_a: resposta.append("C esta antes de A")
-                    elif mai == y_b: resposta.append("C esta depois de B")
-                elif y_c == y_a: resposta.append("C esta em A")
-                elif y_c == y_b: resposta.append("C esta em B")
+                    if mai == y_a: resposta.append("Ponto esta antes de A")
+                    elif mai == y_b: resposta.append("Ponto esta depois de B")
+                elif y_c == y_a: resposta.append("Ponto esta em A")
+                elif y_c == y_b: resposta.append("Ponto esta em B")
 
                 return resposta
+        return ["Reta degenerada", "Ponto nao esta na Reta"]
+
+    def cruzamento_retas(self, outro):
+
+        if not isinstance(outro, Reta):
+            raise ValueError("Parametro inserido nao e uma Reta")
+
+        a = outro.localizacao_ponto_reta(self.p1)
+        b = outro.localizacao_ponto_reta(self.p2)
+        c = self.localizacao_ponto_reta(outro.p1)
+        d = self.localizacao_ponto_reta(outro.p2)
+        
+        cruzamento =(
+            c[1] == "Ponto nao esta na Reta"
+            and d[1] == "Ponto nao esta na Reta"
+            and a[1] == "Ponto nao esta na Reta"
+            and b[1] == "Ponto nao esta na Reta"
+            and (c[0] != d[0])
+            and (a[0] != b[0])
+        )
+        return cruzamento
     
 
 class PoligonoConvexo:
@@ -198,19 +234,61 @@ class PoligonoConvexo:
     def __len__(self):
         return len(self.retas)
 
-    def __iter__(self):
+    def iter_retas(self):
         return iter(self.retas)
 
+    def iter_pontos(self):
+        return iter(self.pontos)
+
     def localizacao_ponto_poligono(self, ponto):
-        for reta in self:
-            if reta.localizacao_ponto_reta(ponto)[0] == "Ponto esta a direita de AB":
-                return "Ponto esta fora do Poligono"
-        return "Ponto esta dentro do Poligono"
+        for reta in self.iter_retas():
+            if reta.localizacao_ponto_reta(ponto)[0] == False:
+                return False
+        return True
 
     def plot_poligono(self):
-        for reta in self:
+        for reta in self.iter_retas():
             reta.plot_reta_finita()
-    
+
+
+class PoligonoGeral:
+    def __init__(self, plano, n):
+
+        if n < 3:
+            raise ValueError("Numero de Pontos insuficiente para formar Poligono")
+
+        self.ax = plano.ax
+        self.plano = plano
+
+        pontos = []
+
+        pontos.append(Ponto(plano, rnd.randint(plano.min_val, plano.max_val), rnd.randint(plano.min_val, plano.max_val)))
+        pontos.append(Ponto(plano, rnd.randint(plano.min_val, plano.max_val), rnd.randint(plano.min_val, plano.max_val)))
+
+        tentativas = 0
+        tentativas_max = 10000*n
+        while len(pontos) < n:
+            tentativas += 1
+            novo_ponto = Ponto(plano, rnd.randint(plano.min_val, plano.max_val), rnd.randint(plano.min_val, plano.max_val))
+
+            if novo_ponto in pontos:
+                continue
+
+            colinear = False
+            for i in range(len(pontos)):
+                for j in range(i + 1, len(pontos)):
+                    if Reta(pontos[i], pontos[j]).localizacao_ponto_reta(novo_ponto)[1] != "Ponto nao esta na Reta":
+                        colinear = True
+                        break
+                if colinear: break
+            if not colinear: pontos.append(novo_ponto)
+
+            if tentativas >= tentativas_max:
+                raise ValueError("Nao foi possivel formar o Poligono")
+
+        retas = [Reta(pontos[i], pontos[i+1]) for i in range(n)]
+        
+
 
 class Plano:
     def __init__(self, min_val, max_val):
