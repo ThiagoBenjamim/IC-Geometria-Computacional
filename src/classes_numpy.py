@@ -33,7 +33,7 @@ class Ponto:
     def __eq__(self, outro):
         if isinstance(outro, Ponto):
             if self.plano.ax == outro.plano.ax:
-                if self.vec == outro.vec:
+                if np.array_equal(self.vec, outro.vec):
                     return True
         return False
 
@@ -100,6 +100,9 @@ class Reta:
         self.ax.axline(self.p1.vec, self.p2.vec, color=self.cor, linestyle="-")
         self.plot_reta_finita()
 
+    def determinante(self):
+        return (self.p1.x * self.p2.y) - (self.p2.x * self.p1.y)
+
     def localizacao_ponto_reta(self, ponto) -> list:
 
         if not isinstance(ponto, Ponto):
@@ -110,7 +113,7 @@ class Reta:
         produto_interno = reta_ponto.produto_interno(self.perpendicular())
 
         if self.ver_degenerado():
-            return ["Reta degenerada"]
+            return ["Reta degenerada", "Ponto nao esta na Reta"]
 
         if produto_interno > 0:
             return [True, "Ponto nao esta na Reta"]
@@ -240,7 +243,7 @@ class PoligonoConvexo:
     def iter_pontos(self):
         return iter(self.pontos)
 
-    def localizacao_ponto_poligono(self, ponto):
+    def localizacao_ponto_poligono_generalizacao(self, ponto):
         for reta in self.iter_retas():
             if reta.localizacao_ponto_reta(ponto)[0] == False:
                 return False
@@ -261,10 +264,6 @@ class PoligonoGeral:
         self.plano = plano
 
         pontos = []
-
-        pontos.append(Ponto(plano, rnd.randint(plano.min_val, plano.max_val), rnd.randint(plano.min_val, plano.max_val)))
-        pontos.append(Ponto(plano, rnd.randint(plano.min_val, plano.max_val), rnd.randint(plano.min_val, plano.max_val)))
-
         tentativas = 0
         tentativas_max = 10000*n
         while len(pontos) < n:
@@ -286,9 +285,63 @@ class PoligonoGeral:
             if tentativas >= tentativas_max:
                 raise ValueError("Nao foi possivel formar o Poligono")
 
-        retas = [Reta(pontos[i], pontos[i+1]) for i in range(n)]
-        
+        retas = [Reta(pontos[i], pontos[(i+1)%n]) for i in range(n)]
+        varredura_incompleta = True
+        while varredura_incompleta:
+            varredura_incompleta = False
+            for i in range(n):
+                for j in range(i+1, n):
+                    if retas[i].cruzamento_retas(retas[j]):
+                        retas[i], retas[j] = Reta(retas[i].p1, retas[j].p1), Reta(retas[i].p2, retas[j].p2)
+                        retas[i + 1 : j] = [Reta(r.p2, r.p1) for r in reversed(retas[i + 1 : j])]
+                        varredura_incompleta = True
 
+        soma_dets = sum([i.determinante() for i in retas])
+        if soma_dets < 0:
+            retas = [Reta(reta.p2, reta.p1) for reta in retas]
+            retas.reverse()
+
+        self.retas = np.array(retas)
+        self.pontos = np.array([reta.p1 for reta in retas])
+
+    def __len__(self):
+        return len(self.retas)
+
+    def iter_retas(self):
+        return iter(self.retas)
+
+    def iter_pontos(self):
+        return iter(self.pontos)
+
+    def plot_poligono(self):
+        for reta in self.iter_retas():
+            reta.plot_reta_finita()
+
+    def localizacao_ponto_poligono_ray_casting(self, ponto):
+
+        for reta in self.retas:
+            resultado = reta.localizacao_ponto_reta(ponto)
+            if resultado[1] in {"Ponto esta em A", "Ponto esta em B", "Ponto esta entre A e B"}:
+                return False
+
+        cruzamentos = 0
+        for reta in self.retas:
+            y1 = reta.p1.y
+            y2 = reta.p2.y
+            if y1 < y2:
+                reta_aux = Reta(reta.p1, reta.p2)
+                if y1 <= ponto.y < y2:
+                    if reta_aux.localizacao_ponto_reta(ponto)[0]:
+                        cruzamentos += 1
+            if y1 > y2:
+                reta_aux = Reta(reta.p2, reta.p1)
+                if y1 > ponto.y >= y2:
+                    if reta_aux.localizacao_ponto_reta(ponto)[0]:
+                        cruzamentos += 1
+
+        if (cruzamentos%2) == 1: return True
+        else: return False
+        
 
 class Plano:
     def __init__(self, min_val, max_val):
