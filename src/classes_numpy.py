@@ -249,6 +249,33 @@ class PoligonoConvexo:
                 return False
         return True
 
+    def localizacao_ponto_poligono_reta_log(self, ponto):
+        esq = 1
+        dir = len(self)-1
+
+        while dir - esq > 1:
+            meio = ((dir + esq)//2)
+            diagonal = Reta(self.pontos[0], self.pontos[meio])
+            resultado = diagonal.localizacao_ponto_reta(ponto)
+
+            if resultado[1] == "Ponto esta entre A e B":
+                return True
+            elif resultado[1] != "Ponto nao esta na Reta":
+                return False
+            elif resultado[0]:
+                esq = meio
+            else:
+                dir = meio
+
+        if not Reta(self.pontos[dir], self.pontos[0]).localizacao_ponto_reta(ponto)[0]:
+            return False
+        if not Reta(self.pontos[0], self.pontos[esq]).localizacao_ponto_reta(ponto)[0]:
+            return False
+        if not Reta(self.pontos[esq], self.pontos[dir]).localizacao_ponto_reta(ponto)[0]:
+            return False
+
+        return True
+
     def plot_poligono(self):
         for reta in self.iter_retas():
             reta.plot_reta_finita()
@@ -341,7 +368,13 @@ class PoligonoGeral:
 
         if (cruzamentos%2) == 1: return True
         else: return False
-        
+
+#==================================================================================
+
+
+
+#==================================================================================
+
 
 class Plano:
     def __init__(self, min_val, max_val):
