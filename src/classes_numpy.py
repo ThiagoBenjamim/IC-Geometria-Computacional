@@ -371,8 +371,91 @@ class PoligonoGeral:
 
 #==================================================================================
 
+class FechoConvexo(PoligonoConvexo):
+    def __init__(self, plano, n):
+
+        if n < 3:
+            raise ValueError("Quantidade de pontos insuficiente para formar um fecho convexo")
+
+        self.ax = plano.ax
+        self.plano = plano
+
+        lista_pontos = []
+        tentativas = 0
+        tentativas_max = 10000 * n
+        while len(lista_pontos) < n:
+            if tentativas >= tentativas_max:
+                raise ValueError("Nao foi possivel sortear n pontos distintos no plano")
+            tentativas += 1
+
+            novo_ponto = Ponto(
+                plano,
+                rnd.randint(plano.min_val, plano.max_val),
+                rnd.randint(plano.min_val, plano.max_val),
+                )
+            if novo_ponto not in lista_pontos:
+                lista_pontos.append(novo_ponto)
+
+        self.todos_pontos = np.array(lista_pontos)
+
+        ordenados = sorted(lista_pontos, key=lambda p: (p.x, p.y))
+
+        inferior = []
+        for p in ordenados:
+            while len(inferior) >= 2 and not Reta(inferior[-2], inferior[-1]).localizacao_ponto_reta(p)[0]:
+                inferior.pop()
+            inferior.append(p)
+
+        superior = []
+        for p in reversed(ordenados):
+            while len(superior) >= 2 and not Reta(superior[-2], superior[-1]).localizacao_ponto_reta(p)[0]:
+                superior.pop()
+            superior.append(p)
+
+        vertices_fecho = inferior[:-1] + superior[:-1]
+
+        if len(vertices_fecho) < 3:
+            raise ValueError("Todos os pontos sorteados sao colineares; nao formam poligono")
+
+        self.pontos = np.array(vertices_fecho)
+        self.retas = np.array([
+            Reta(self.pontos[i], self.pontos[(i + 1) % len(self.pontos)], "blue")
+            for i in range(len(self.pontos))
+        ])
+
+    def iter_todos_pontos(self):
+        return iter(self.todos_pontos)
+
+    def plot_poligono(self):
+        for ponto in self.iter_todos_pontos():
+            ponto.plot_point()
+        for reta in self.iter_retas():
+            reta.plot_reta_finita()
 
 
+class Triangulo(PoligonoConvexo):
+    def __init__(self, plano, pontos=None):
+
+        self.plano = plano
+        self.ax = plano.ax
+
+        if pontos is None:
+            while True:
+                pontos = [Ponto(plano, 
+                        rnd.randint(plano.min_val, plano.max_val), 
+                        rnd.randint(plano.min_val, plano.max_val))
+                        for _ in range(3)]
+                if Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[1] == "Ponto nao esta na Reta" and not Reta(pontos[0], pontos[1]).ver_degenerado():
+                    break
+        else:
+            if Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[1] != "Ponto nao esta na Reta" and not Reta(pontos[0], pontos[1]).ver_degenerado():
+                raise ValueError("Pontos inválidos para formação de Triangulo")
+
+        if not Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[0]:
+            pontos.reverse()
+
+        self.pontos = np.array(pontos)
+        self.retas = np.array([Reta(pontos[i], pontos[(i+1)%3]) for i in range(3)])
 #==================================================================================
 
 
