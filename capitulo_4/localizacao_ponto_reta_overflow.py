@@ -17,7 +17,7 @@ plano = cl.Plano(-(2**15), 2**15)
 #Pontos para reta(A, B) e ponto C para comparação
 pontos = {"A": cl.Ponto(plano, 0, 0),
           "B": cl.Ponto(plano, 2**15, 2**15),
-          "C": cl.Ponto(plano, -(2**15), 2**15, "blue")}
+          "C": cl.Ponto(plano, -(2**15), 2**15)}
 
 for ponto in pontos.values():
     ponto.vec = ponto.vec.astype(np.int32)

@@ -15,7 +15,7 @@ graf_min = 0
 graf_max = 20
 plano = cl.Plano(graf_min, graf_max)
 
-ponto = cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max), "blue")
+ponto = cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))
 
 poligono = cl.PoligonoGeral(plano, rnd.randint(3, 20))
 

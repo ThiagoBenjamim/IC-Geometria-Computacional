@@ -18,7 +18,7 @@ plano = cl.Plano(graf_min, graf_max)
 #Pontos para reta(A, B) e ponto C para comparação
 pontos = {"A": cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max)),
           "B": cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max)),
-          "C": cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max), "blue")}
+          "C": cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))}
 
 
 #Cria a reta
@@ -35,6 +35,6 @@ reta.plot_reta_infinita()
 if reta.localizacao_ponto_reta(pontos["C"])[0]:
     print("Ponto esta a esquerda da Reta")
 else:
-    print("Ponto esta a direita da Reta")
+    print("Ponto esta a direita/sobre da Reta")
 print(reta.localizacao_ponto_reta(pontos["C"])[1])
 plano.apresentar()
