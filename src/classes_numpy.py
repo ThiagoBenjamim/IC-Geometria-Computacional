@@ -5,11 +5,10 @@ import math
 
 
 class Ponto:
-    def __init__(self, plano, x, y, cor="red"):
+    def __init__(self, plano, x, y):
         self.ax = plano.ax
         self.plano = plano
         self.vec = np.array([x, y])
-        self.cor = cor
 
     @property
     def x(self):
@@ -19,8 +18,8 @@ class Ponto:
     def y(self):
         return self.vec[1]
 
-    def plot_point(self):
-        self.ax.scatter(self.x, self.y, c=self.cor)
+    def plot_point(self, cor="red"):
+        self.ax.scatter(self.x, self.y, c=cor)
 
     def __repr__(self):
         return f"Ponto({self.x}, {self.y})"
@@ -48,7 +47,7 @@ class Ponto:
 
 
 class Reta:
-    def __init__(self, ponto1, ponto2, cor="red"):
+    def __init__(self, ponto1, ponto2):
         if ponto1.ax != ponto2.ax:
             raise AttributeError("Os pontos pertencem a graficos diferentes")
 
@@ -56,7 +55,6 @@ class Reta:
         self.plano = ponto1.plano
         self.p1 = ponto1
         self.p2 = ponto2
-        self.cor = cor
 
     @property
     def vec(self):
@@ -73,10 +71,10 @@ class Reta:
     def perpendicular(self):
         dx, dy = self.vec
 
-        p1_novo = Ponto(self.plano, self.p1.x, self.p1.y, self.p1.cor)
-        p2_novo = Ponto(self.plano, self.p1.x - dy, self.p1.y + dx, self.p2.cor)
+        p1_novo = Ponto(self.plano, self.p1.x, self.p1.y)
+        p2_novo = Ponto(self.plano, self.p1.x - dy, self.p1.y + dx)
 
-        return Reta(p1_novo, p2_novo, self.cor)
+        return Reta(p1_novo, p2_novo)
 
     def produto_interno(self, outro):
         if not isinstance(outro, Reta):
@@ -93,12 +91,12 @@ class Reta:
     def ver_horizontal(self):
         return (self.vec[1] == 0 and not self.ver_degenerado())
 
-    def plot_reta_finita(self):
-        self.ax.plot(self.x_coords, self.y_coords, color=self.cor, marker="o")
+    def plot_reta_finita(self, cor="red"):
+        self.ax.plot(self.x_coords, self.y_coords, color=cor, marker="o")
 
-    def plot_reta_infinita(self):
-        self.ax.axline(self.p1.vec, self.p2.vec, color=self.cor, linestyle="-")
-        self.plot_reta_finita()
+    def plot_reta_infinita(self, cor="red"):
+        self.ax.axline(self.p1.vec, self.p2.vec, color=cor, linestyle="-")
+        self.plot_reta_finita(cor)
 
     def determinante(self):
         return (self.p1.x * self.p2.y) - (self.p2.x * self.p1.y)
@@ -176,8 +174,8 @@ class Reta:
 class PoligonoConvexo:
     def __init__(self, plano, n):
 
-        if n < 3:
-            raise ValueError("Quantidade de pontos insuficiente para formar um poligono")
+        if (plano.max_val - plano.min_val) < n < 3:
+            raise ValueError("Quantidade de pontos invalida para formar um poligono")
 
         self.ax = plano.ax
         self.plano = plano
@@ -232,7 +230,7 @@ class PoligonoConvexo:
 
         self.pontos = np.array([Ponto(plano, x, y) for x, y in coords])
 
-        self.retas = np.array([Reta(self.pontos[i], self.pontos[(i+1)%len(self.pontos)], "blue") for i in range(len(self.pontos))])
+        self.retas = np.array([Reta(self.pontos[i], self.pontos[(i+1)%len(self.pontos)]) for i in range(len(self.pontos))])
 
     def __len__(self):
         return len(self.retas)
@@ -276,9 +274,9 @@ class PoligonoConvexo:
 
         return True
 
-    def plot_poligono(self):
+    def plot_poligono(self, cor="red"):
         for reta in self.iter_retas():
-            reta.plot_reta_finita()
+            reta.plot_reta_finita(cor)
 
 
 class PoligonoGeral:
@@ -340,9 +338,9 @@ class PoligonoGeral:
     def iter_pontos(self):
         return iter(self.pontos)
 
-    def plot_poligono(self):
+    def plot_poligono(self, cor="red"):
         for reta in self.iter_retas():
-            reta.plot_reta_finita()
+            reta.plot_reta_finita(cor)
 
     def localizacao_ponto_poligono_ray_casting(self, ponto):
 
@@ -372,29 +370,41 @@ class PoligonoGeral:
 #==================================================================================
 
 class FechoConvexo(PoligonoConvexo):
-    def __init__(self, plano, n):
+    def __init__(self, plano, pontos=None, n=None):
 
-        if n < 3:
-            raise ValueError("Quantidade de pontos insuficiente para formar um fecho convexo")
+        if n is None and pontos is None:
+            raise ValueError("Um dos parâmetros precisa ser definido")
+
+        if n is None and pontos is not None:
+            n = len(pontos)
 
         self.ax = plano.ax
         self.plano = plano
 
-        lista_pontos = []
-        tentativas = 0
-        tentativas_max = 10000 * n
-        while len(lista_pontos) < n:
-            if tentativas >= tentativas_max:
-                raise ValueError("Nao foi possivel sortear n pontos distintos no plano")
-            tentativas += 1
+        if pontos is None and n is not None:
+            lista_pontos = []
+            tentativas = 0
+            tentativas_max = 10000 * n
+            while len(lista_pontos) < n:
+                if tentativas >= tentativas_max:
+                    raise ValueError("Nao foi possivel sortear n pontos distintos no plano")
+                tentativas += 1
 
-            novo_ponto = Ponto(
-                plano,
-                rnd.randint(plano.min_val, plano.max_val),
-                rnd.randint(plano.min_val, plano.max_val),
-                )
-            if novo_ponto not in lista_pontos:
-                lista_pontos.append(novo_ponto)
+                novo_ponto = Ponto(
+                    plano,
+                    rnd.randint(plano.min_val, plano.max_val),
+                    rnd.randint(plano.min_val, plano.max_val),
+                    )
+                if novo_ponto not in lista_pontos:
+                    lista_pontos.append(novo_ponto)
+        elif pontos is not None:
+            lista = []
+            for ponto in pontos:
+                if ponto not in lista:
+                    lista.append(ponto)
+            if len(lista) < len(pontos):
+                raise ValueError("Parametro pontos inválido")
+            lista_pontos = pontos
 
         self.todos_pontos = np.array(lista_pontos)
 
@@ -419,18 +429,22 @@ class FechoConvexo(PoligonoConvexo):
 
         self.pontos = np.array(vertices_fecho)
         self.retas = np.array([
-            Reta(self.pontos[i], self.pontos[(i + 1) % len(self.pontos)], "blue")
+            Reta(self.pontos[i], self.pontos[(i + 1) % len(self.pontos)])
             for i in range(len(self.pontos))
         ])
+        self.pontos_internos = np.array([ponto for ponto in self.todos_pontos if ponto not in self.pontos])
 
     def iter_todos_pontos(self):
         return iter(self.todos_pontos)
 
-    def plot_poligono(self):
+    def plot_poligono(self, cor="red"):
         for ponto in self.iter_todos_pontos():
-            ponto.plot_point()
+            ponto.plot_point(cor)
         for reta in self.iter_retas():
-            reta.plot_reta_finita()
+            reta.plot_reta_finita(cor)
+
+    def len_total(self):
+        return len(self.todos_pontos)
 
 
 class Triangulo(PoligonoConvexo):
@@ -447,15 +461,151 @@ class Triangulo(PoligonoConvexo):
                         for _ in range(3)]
                 if Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[1] == "Ponto nao esta na Reta" and not Reta(pontos[0], pontos[1]).ver_degenerado():
                     break
-        else:
-            if Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[1] != "Ponto nao esta na Reta" and not Reta(pontos[0], pontos[1]).ver_degenerado():
+        elif len(pontos) == 3:
+            pontos = list(pontos)
+            if Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[1] != "Ponto nao esta na Reta" or Reta(pontos[0], pontos[1]).ver_degenerado():
                 raise ValueError("Pontos inválidos para formação de Triangulo")
+        else:
+            raise ValueError("Numero de pontos diferente de 3")
 
         if not Reta(pontos[0], pontos[1]).localizacao_ponto_reta(pontos[2])[0]:
             pontos.reverse()
 
         self.pontos = np.array(pontos)
         self.retas = np.array([Reta(pontos[i], pontos[(i+1)%3]) for i in range(3)])
+
+    def cramer(self, ponto):
+
+        eq1 = [self.pontos[i].x for i in range(3)]
+        eq2 = [self.pontos[i].y for i in range(3)]
+        eq3 = [1, 1, 1]
+
+        return np.linalg.solve([eq1, eq2, eq3], [ponto.x, ponto.y, 1])
+
+
+class TriangulacaoPontos:
+    def __init__(self, plano, pontos=None, n=0):
+
+        if pontos is None and n < 3:
+            raise ValueError("Numero de pontos insuficiente para realizar TriangulacaoPontos")
+        
+        if pontos is None:
+            pontos = FechoConvexo(plano, n=n)
+
+        if not isinstance(pontos, FechoConvexo):
+            try:
+                self.fecho_convexo = FechoConvexo(plano, pontos)
+            except: raise ValueError("Parametro pontos invalido para criar FechoConvexo")
+        else:
+            self.fecho_convexo = pontos
+
+        self.plano = plano
+        self.ax = plano.ax
+
+        ancora = self.fecho_convexo.pontos[0]
+        triangulos_iniciais = [Triangulo(plano, [ancora, self.fecho_convexo.pontos[i], self.fecho_convexo.pontos[i + 1]])
+                                for i in range(1, len(self.fecho_convexo.pontos) - 1)]
+        
+        for ponto in self.fecho_convexo.pontos_internos:
+            proximos_triangulos = []
+            for triangulo in triangulos_iniciais:
+                if triangulo.localizacao_ponto_poligono_generalizacao(ponto):
+                    for idx in range(3):
+                        proximos_triangulos.append(Triangulo(plano, [triangulo.pontos[idx],triangulo.pontos[(idx+1)%3], ponto]))
+                    continue
+
+                edge_idx = None
+                for idx, reta in enumerate(triangulo.retas):
+                    if reta.localizacao_ponto_reta(ponto)[1] == "Ponto esta entre A e B":
+                        edge_idx = idx
+                        break
+
+                if edge_idx is not None:
+                    va = triangulo.pontos[edge_idx]
+                    vb = triangulo.pontos[(edge_idx + 1) % 3]
+                    v_oposto = triangulo.pontos[(edge_idx + 2) % 3]
+                    proximos_triangulos.append(Triangulo(plano, (va, ponto, v_oposto)))
+                    proximos_triangulos.append(Triangulo(plano, (ponto, vb, v_oposto)))
+                else:
+                    proximos_triangulos.append(triangulo)
+
+            triangulos_iniciais = proximos_triangulos
+
+        self.triangulos = np.array(triangulos_iniciais)
+
+        arestas_unicas = []
+        vistos = set()
+        for triangulo in self.triangulos:
+            for reta in triangulo.retas:
+                set_ver = frozenset({(reta.p1.x, reta.p1.y), (reta.p2.x, reta.p2.y)})
+                if set_ver not in vistos:
+                    arestas_unicas.append(reta)
+                    vistos.add(set_ver)
+        self.retas = np.array(arestas_unicas)
+
+    def localizacao_ponto_triangulo(self, ponto: Ponto):
+        for triangulo in self.triangulos:
+            if triangulo.localizacao_ponto_poligono_generalizacao(ponto):
+                return triangulo
+            for reta in triangulo.retas:
+                if reta.localizacao_ponto_reta(ponto)[1] in ("Ponto esta em A", "Ponto esta em B", "Ponto esta entre A e B"):
+                    return triangulo
+        raise ValueError("Parametro Ponto esta fora do Triangulo")
+
+    def plot_triangulacao(self, cor="red"):
+        for reta in self.retas:
+            reta.plot_reta_finita(cor)
+
+
+class TriangulacaoPontosSweepLine(TriangulacaoPontos):
+    def __init__(self, plano, pontos=None, n=0):
+        if pontos is None and n < 3:
+            raise ValueError("Numero de pontos insuficiente para realizar TriangulacaoPontos")
+        
+        if pontos is None:
+            pontos = FechoConvexo(plano, n=n)
+
+        if not isinstance(pontos, FechoConvexo):
+            try:
+                self.fecho_convexo = FechoConvexo(plano, pontos)
+            except: raise ValueError("Parametro pontos invalido para criar FechoConvexo")
+        else:
+            self.fecho_convexo = pontos
+
+        self.plano = plano
+        self.ax = plano.ax
+
+        pontos_ordenados = sorted(self.fecho_convexo.pontos, key=lambda p: (p.x, p.y))
+        total = len(pontos_ordenados)
+
+        reta_ancora = Reta(pontos_ordenados[0], pontos_ordenados[1])
+        m = 2
+        while m < total and reta_ancora.localizacao_ponto_reta(pontos_ordenados[m])[1] != "Ponto nao esta na Reta":
+            m += 1
+
+        triangulos = [Triangulo(plano, 
+                                (pontos_ordenados[m], pontos_ordenados[i], pontos_ordenados[i+1]))
+                                for i in range(total-1)]
+
+        if Reta(pontos_ordenados[0], pontos_ordenados[m - 1]).localizacao_ponto_reta(pontos_ordenados[m])[0]:
+            sequencia = pontos_ordenados[:m] + [pontos_ordenados[m]]
+        else:
+            sequencia = [pontos_ordenados[m]] + list(reversed(pontos_ordenados[:m]))
+
+        pontos_iniciais = [ListaEncadeada(p) for p in sequencia]
+        cont_pontos = len(pontos_iniciais)
+
+        ponto_ultimo = pontos_iniciais[0] if sequencia[0] == pontos_ordenados[m] else pontos_iniciais[-1]
+
+        raise NotImplementedError("Classe ainda não implementada")
+
+
+class ListaEncadeada:
+    def __init__(self, ponto: Ponto):
+        self.ponto = ponto
+        self.next = None
+        self.prev = None
+
 #==================================================================================
 
 
