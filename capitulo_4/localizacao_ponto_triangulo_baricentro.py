@@ -38,6 +38,6 @@ for idx in range(3):
 
 
 triangulo.plot_poligono()
-ponto.plot_point()
+ponto.plot_point("blue")
 print(ver_ponto_em_triangulo)
 plano.apresentar()

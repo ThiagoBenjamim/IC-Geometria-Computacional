@@ -17,10 +17,10 @@ plano = cl.Plano(graf_min, graf_max)
 
 ponto = cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, graf_max))
 
-poligono = cl.PoligonoConvexo(plano, rnd.randint(3, 20))
+poligono = cl.PoligonoConvexo(plano, rnd.randint(3, 10))
 
 poligono.plot_poligono()
-ponto.plot_point()
+ponto.plot_point("blue")
 if poligono.localizacao_ponto_poligono_generalizacao(ponto):
     print("Ponto dentro do Polígono")
 else:

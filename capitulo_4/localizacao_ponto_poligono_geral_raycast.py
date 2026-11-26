@@ -20,7 +20,7 @@ ponto = cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, g
 poligono = cl.PoligonoGeral(plano, rnd.randint(3, 20))
 
 poligono.plot_poligono()
-ponto.plot_point()
+ponto.plot_point("blue")
 if poligono.localizacao_ponto_poligono_ray_casting(ponto):
     print("Ponto dentro do Polígono")
 else:

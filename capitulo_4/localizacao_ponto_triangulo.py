@@ -20,7 +20,7 @@ ponto = cl.Ponto(plano, rnd.randint(graf_min, graf_max), rnd.randint(graf_min, g
 triangulo = cl.PoligonoConvexo(plano, 3)
 
 triangulo.plot_poligono()
-ponto.plot_point()
+ponto.plot_point("blue")
 if triangulo.localizacao_ponto_poligono_generalizacao(ponto):
     print("Ponto esta dentro do Triangulo")
 else:
